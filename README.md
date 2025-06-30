@@ -1,66 +1,97 @@
 ```bash
-#!/bin/sh env
+#!/bin/bash
 
-# Store environment from argument
-ENVIRONMENT=$1
+# Function to display the table
+generate_table() {
+  local number=$1
+  local start=$2
+  local end=$3
+  local order=$4
+  local loop_type=$5
 
-# Function: Check if script received an argument
-check_num_of_args() {
-    if [ "$#" -eq 0 ]; then
-        echo "Usage: $0 <environment>"
-        exit 1
+  echo
+  echo "Multiplication table for $number from $start to $end ($order order, $loop_type loop):"
+
+  if [ "$order" == "asc" ]; then
+    if [ "$loop_type" == "list" ]; then
+      for i in $(seq $start $end); do
+        echo "$number x $i = $((number * i))"
+      done
+    else
+      for ((i=start; i<=end; i++)); do
+        echo "$number x $i = $((number * i))"
+      done
     fi
-}
-
-# Function: Validate AWS CLI installation
-check_aws_cli() {
-    if ! command -v aws &> /dev/null; then
-        echo "AWS CLI is not installed. Please install it before proceeding."
-        exit 1
+  else
+    if [ "$loop_type" == "list" ]; then
+      for i in $(seq $end -1 $start); do
+        echo "$number x $i = $((number * i))"
+      done
+    else
+      for ((i=end; i>=start; i--)); do
+        echo "$number x $i = $((number * i))"
+      done
     fi
+  fi
 }
 
-# Function: Check if AWS_PROFILE environment variable is set
-check_aws_profile() {
-    if [ -z "$AWS_PROFILE" ]; then
-        echo "AWS profile environment variable is not set."
-        exit 1
+while true; do
+  echo -n "Enter a number for the multiplication table: "
+  read number
+
+  # Check if number is an integer
+  if ! [[ "$number" =~ ^[0-9]+$ ]]; then
+    echo "Invalid number. Please enter a valid integer."
+    continue
+  fi
+
+  echo -n "Do you want a full table or partial? (f/p): "
+  read table_type
+
+  if [ "$table_type" == "p" ]; then
+    echo -n "Enter starting number (1–10): "
+    read start
+    echo -n "Enter ending number (1–10): "
+    read end
+
+    if ! [[ "$start" =~ ^[0-9]+$ && "$end" =~ ^[0-9]+$ && $start -le $end && $start -ge 1 && $end -le 10 ]]; then
+      echo "Invalid range. Showing full table instead."
+      start=1
+      end=10
     fi
-}
+  else
+    start=1
+    end=10
+  fi
 
-# Function: Run setup for specified environment
-activate_infra_environment() {
-    case "$ENVIRONMENT" in
-        local)
-            echo "Running script for Local Environment..."
-            ;;
-        testing)
-            echo "Running script for Testing Environment..."
-            ;;
-        production)
-            echo "Running script for Production Environment..."
-            ;;
-        *)
-            echo "Invalid environment specified. Use 'local', 'testing', or 'production'."
-            exit 2
-            ;;
-    esac
-}
+  echo -n "Choose loop type - list or c-style? (list/c): "
+  read loop_type
+  if [ "$loop_type" != "c" ]; then
+    loop_type="list"
+  fi
 
-# --- Main Execution Flow ---
-check_num_of_args "$@"
-check_aws_cli
-check_aws_profile
-activate_infra_environment
+  echo -n "Do you want ascending or descending order? (asc/desc): "
+  read order
+  if [ "$order" != "desc" ]; then
+    order="asc"
+  fi
+
+  generate_table "$number" "$start" "$end" "$order" "$loop_type"
+
+  echo
+  echo -n "Do you want to try another number? (y/n): "
+  read again
+  if [ "$again" != "y" ]; then
+    echo "Goodbye!"
+    break
+  fi
+done
 ```
+``
 
+🧪 How to Run
 
-✅ This Script Demonstrates:
+Save it as multiplication_table.sh, make it executable and run:
 
-    Argument checking via check_num_of_args
-
-    AWS CLI installation verification with check_aws_cli
-
-    AWS authentication check using check_aws_profile
-
-    Environment-specific logic through activate_infra_environment
+chmod +x multiplication_table.sh
+./multiplication_table.sh

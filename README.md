@@ -1,57 +1,66 @@
 ```bash
 #!/bin/sh env
-# Function to create S3 buckets for different departments
-create_s3_buckets() {"\n    company=\"datawise\"\n    departments=(\"Marketing\" \"Sales\" \"HR\" \"Operations\" \"Media\")\n    \n    for department in \"${departments[@]"}"; do
-        bucket_name="${company}-${department}-Data-Bucket"
 
-        # Check if the bucket already exists
-        if aws s3api head-bucket --bucket "$bucket_name" &>/dev/null; then
-            echo "S3 bucket '$bucket_name' already exists."
-        else
-            # Create S3 bucket using AWS CLI
-            aws s3api create-bucket --bucket "$bucket_name" --region your-region
-            if [ $? -eq 0 ]; then
-                echo "S3 bucket '$bucket_name' created successfully."
-            else
-                echo "Failed to create S3 bucket '$bucket_name'."
-            fi
-        fi
-    done
+# Store environment from argument
+ENVIRONMENT=$1
+
+# Function: Check if script received an argument
+check_num_of_args() {
+    if [ "$#" -eq 0 ]; then
+        echo "Usage: $0 <environment>"
+        exit 1
+    fi
 }
 
+# Function: Validate AWS CLI installation
+check_aws_cli() {
+    if ! command -v aws &> /dev/null; then
+        echo "AWS CLI is not installed. Please install it before proceeding."
+        exit 1
+    fi
+}
+
+# Function: Check if AWS_PROFILE environment variable is set
+check_aws_profile() {
+    if [ -z "$AWS_PROFILE" ]; then
+        echo "AWS profile environment variable is not set."
+        exit 1
+    fi
+}
+
+# Function: Run setup for specified environment
+activate_infra_environment() {
+    case "$ENVIRONMENT" in
+        local)
+            echo "Running script for Local Environment..."
+            ;;
+        testing)
+            echo "Running script for Testing Environment..."
+            ;;
+        production)
+            echo "Running script for Production Environment..."
+            ;;
+        *)
+            echo "Invalid environment specified. Use 'local', 'testing', or 'production'."
+            exit 2
+            ;;
+    esac
+}
+
+# --- Main Execution Flow ---
+check_num_of_args "$@"
+check_aws_cli
+check_aws_profile
+activate_infra_environment
 ```
-🔍 Key Concepts Covered:
-🧩 1. Importance of Error Handling
 
-    Helps make scripts more reliable, robust, and user-friendly.
 
-    Accounts for issues like invalid input, failed commands, or unavailable resources.
+✅ This Script Demonstrates:
 
-⚙️ 2. Implementation Steps
+    Argument checking via check_num_of_args
 
-    Identify Potential Errors: Anticipate failures in file operations, input, or commands.
+    AWS CLI installation verification with check_aws_cli
 
-    Use Conditional Logic: Use if, elif, and else blocks to handle different outcomes, especially by checking command exit status $?.
+    AWS authentication check using check_aws_profile
 
-    Display Informative Messages: Notify the user clearly when an error occurs and suggest corrective steps.
-
-🪣 3. Real-world Scenario – S3 Bucket Creation
-
-    Demonstrates how to check if a bucket already exists using:
-
-    aws s3api head-bucket --bucket "$bucket_name"
-
-    If it exists, the script prints a message instead of attempting to recreate it.
-
-    This avoids duplication and prevents the script from failing on subsequent runs.
-
-💡 Example Function: create_s3_buckets
-
-    Loops through department names.
-
-    Checks for existing buckets.
-
-    Only creates new ones if they don’t already exist.
-
-    Includes feedback messages for both success and failure outcomes.
-
+    Environment-specific logic through activate_infra_environment
